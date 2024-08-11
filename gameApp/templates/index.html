@@ -1,0 +1,180 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Tapping Game UI</title>
+    <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"> -->
+     <link rel="stylesheet" href="{% static "css/bootstrap.min.css" %}">
+
+    <style>
+        /* Custom styles */
+        body {
+            background-color: #212B36;
+            color: #FFFFFF;
+        }
+
+        .navbar {
+            background-color: #1A202C;
+        }
+
+        .navbar-brand {
+            color: #FFFFFF;
+            font-weight: bold;
+        }
+
+        .navbar-brand:hover {
+            color: #F7FAFC;
+        }
+
+        .tapping-area {
+            background-color: #2D3748;
+            border-radius: 15px;
+            height: 300px; /* Reduced height for better mobile compatibility */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tapping-target {
+            background-color: #4299E1;
+            /* background-image: url('assets/images/xcoin.png'); */
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            position: absolute;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+        }
+
+        .score-board {
+            background-color: #1A202C;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .footer {
+            background-color: #1A202C;
+            padding: 20px;
+            text-align: center;
+            color: #A0AEC0;
+            margin-top: 40px;
+        }
+
+        .target-hit {
+            background-color: #2B6CB0 !important;
+            transform: scale(1.1);
+        }
+
+        @media (max-width: 576px) {
+            /* Adjusting the target size for smaller screens */
+            .tapping-target {
+                width: 40px;
+                height: 40px;
+            }
+
+            /* Ensuring the tapping area is smaller for mobile */
+            .tapping-area {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">TapCombat</a>
+        </div>
+    </nav>
+
+    <!-- Main content -->
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="score-board mt-4">
+                    <h3>Your Score: <span id="score">0</span></h3>
+                </div>
+                <div class="tapping-area" id="tappingArea">
+                    <div class="tapping-target" id="tappingTarget"></div>
+                </div>
+                <div class="score-board mt-4">
+                    <form action="{% url "gameApp:submit_score" %}" method="post">
+                        {% csrf_token %}
+                        {% comment %} <input type="text" name="score" id="score" value="0"> {% endcomment %}
+                        <textarea name="score" id="scoretext" hidden>0</textarea>
+                        <textarea name="user_id" id="user_id" hidden>{{ user_id }}</textarea>
+                        <button class="btn btn-primary" type="submit" onclick="submitScore()">Submit</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2024 TapCombat. All rights reserved.</p>
+    </footer>
+
+    <!-- Bootstrap JS -->
+     <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script> -->
+      <script src="{% static "js/bootstrap.min.js" %}"></script>
+
+    <!-- Game Script -->
+    <script>
+        let score = 0;
+        const userId = "{{ user_id }}";
+
+        const tappingArea = document.getElementById("tappingArea");
+        const tappingTarget = document.getElementById("tappingTarget");
+        const scoreDisplay = document.getElementById("score");
+        const scoreDisplaytext = document.getElementById("scoretext");
+
+        function moveTarget() {
+            const areaWidth = tappingArea.clientWidth;
+            const areaHeight = tappingArea.clientHeight;
+            const targetSize = tappingTarget.clientWidth;
+
+            const newLeft = Math.floor(Math.random() * (areaWidth - targetSize));
+            const newTop = Math.floor(Math.random() * (areaHeight - targetSize));
+
+            tappingTarget.style.left = `${newLeft}px`;
+            tappingTarget.style.top = `${newTop}px`;
+        }
+
+        function submitScore() {
+            fetch('submit/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                body: JSON.stringify({ score: score })
+            }).then(response => response.json())
+              .then(data => {
+                  alert(`Score submitted! Your final score: ${data.score}`);
+              });
+        }
+
+        tappingTarget.addEventListener("click", function () {
+            score++;
+            scoreDisplay.textContent = score;
+            scoreDisplaytext.textContent = score;
+            moveTarget();
+            tappingTarget.classList.add('target-hit');
+            setTimeout(() => {
+                tappingTarget.classList.remove('target-hit');
+            }, 100);
+        });
+
+        // Initialize the target position
+        moveTarget();
+    </script>
+</body>
+
+</html>
